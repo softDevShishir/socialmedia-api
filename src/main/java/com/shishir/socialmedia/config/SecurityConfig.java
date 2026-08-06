@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -44,9 +45,8 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers(Routes.AUTH_REGISTER, Routes.AUTH_LOGIN).permitAll()
-                        .requestMatchers(Routes.USERS).permitAll()
-                        .requestMatchers(Routes.USER_BY_USERNAME).permitAll()
+                        .requestMatchers(HttpMethod.POST, Routes.AUTH_REGISTER, Routes.AUTH_LOGIN).permitAll()
+                        .requestMatchers(HttpMethod.GET, Routes.USERS, Routes.USER_BY_USERNAME).permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

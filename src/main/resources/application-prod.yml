@@ -10,7 +10,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    database-platform: org.hibernate.dialect.PostgreSQL16Dialect
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: false
 
 logging:
