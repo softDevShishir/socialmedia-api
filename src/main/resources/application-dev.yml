@@ -1,0 +1,23 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/socialmedia_db_dev
+    username: socialmedia_user
+    password: socialmedia_password
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.PostgreSQL16Dialect
+    show-sql: true
+
+logging:
+  level:
+    root: INFO
+    com.shishir.socialmedia: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+server:
+  error:
+    include-stacktrace: always
