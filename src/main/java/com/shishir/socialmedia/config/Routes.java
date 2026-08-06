@@ -20,4 +20,9 @@ public class Routes {
     public static final String USERS = V1 + "/users";
     public static final String USER_BY_USERNAME = USERS + "/{username}";
     public static final String USER_BY_ID = USERS + "/{userId}";
+
+    // Post routes
+    public static final String POSTS = V1 + "/posts";
+    public static final String POST_BY_ID = POSTS + "/{postId}";
+    public static final String USER_POSTS = USERS + "/{userId}/posts";
 }

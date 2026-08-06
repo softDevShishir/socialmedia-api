@@ -45,8 +45,7 @@ public class UserProfileController {
             @Valid @RequestBody UserUpdateRequest request,
             Authentication authentication) {
 
-        UserProfileResponse currentUser = userService.getCurrentUser(authentication.getName());
-        if (!currentUser.getId().equals(userId)) {
+        if (!userService.getCurrentUserId(authentication.getName()).equals(userId)) {
             throw new AccessDeniedException("You can only update your own profile");
         }
 

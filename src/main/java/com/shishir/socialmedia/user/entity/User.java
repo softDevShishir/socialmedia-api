@@ -1,6 +1,8 @@
 package com.shishir.socialmedia.user.entity;
 
 import com.shishir.socialmedia.config.AuditData;
+import com.shishir.socialmedia.post.entity.Post;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -8,6 +10,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -20,11 +23,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "users")
 @Getter
 @Setter
-@ToString(exclude = "password")
+@ToString(exclude = {"password", "posts"})
 @EqualsAndHashCode(callSuper = false, of = "id")
 @NoArgsConstructor
 @AllArgsConstructor
@@ -77,4 +83,8 @@ public class User extends AuditData {
     @Builder.Default
     @Column(name = "is_active")
     private Boolean isActive = true;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Post> posts = new ArrayList<>();
 }
