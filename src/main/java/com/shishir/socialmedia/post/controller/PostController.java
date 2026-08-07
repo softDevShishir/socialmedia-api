@@ -8,6 +8,8 @@ import com.shishir.socialmedia.post.dto.UpdatePostRequest;
 import com.shishir.socialmedia.post.service.PostService;
 import com.shishir.socialmedia.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,14 +28,18 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "Posts", description = "Post creation and management")
+@Tag(name = "Posts", description = "Post management: create, read, update, delete")
 public class PostController {
 
     private final PostService postService;
     private final UserService userService;
 
     @PostMapping(Routes.POSTS)
-    @Operation(summary = "Create post", description = "Create a new post")
+    @Operation(summary = "Create post", description = "Create new post with content and optional media")
+    @ApiResponse(responseCode = "201", description = "Post created")
+    @ApiResponse(responseCode = "400", description = "Validation failed")
+    @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token")
+    @SecurityRequirement(name = "bearer-jwt")
     public ResponseEntity<PostResponse> createPost(@Valid @RequestBody CreatePostRequest request, Authentication authentication) {
         Long userId = userService.getCurrentUserId(authentication.getName());
         PostResponse response = postService.createPost(userId, request);
@@ -41,19 +47,28 @@ public class PostController {
     }
 
     @GetMapping(Routes.POSTS)
-    @Operation(summary = "Get all posts", description = "Get feed of all posts")
+    @Operation(summary = "Get all posts", description = "Get feed of all posts (most recent first)")
+    @ApiResponse(responseCode = "200", description = "List of posts")
     public ResponseEntity<List<PostResponse>> getAllPosts() {
         return ResponseEntity.ok(postService.getAllPosts());
     }
 
     @GetMapping(Routes.POST_BY_ID)
-    @Operation(summary = "Get post by ID", description = "Get specific post details")
+    @Operation(summary = "Get post by ID", description = "Get specific post with details")
+    @ApiResponse(responseCode = "200", description = "Post found")
+    @ApiResponse(responseCode = "404", description = "Post not found")
     public ResponseEntity<PostDetailResponse> getPostById(@PathVariable Long postId) {
         return ResponseEntity.ok(postService.getPostDetailById(postId));
     }
 
     @PutMapping(Routes.POST_BY_ID)
     @Operation(summary = "Update post", description = "Update authenticated user's post")
+    @ApiResponse(responseCode = "200", description = "Post updated")
+    @ApiResponse(responseCode = "400", description = "Validation failed, or post is deleted")
+    @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token")
+    @ApiResponse(responseCode = "403", description = "Cannot update another user's post")
+    @ApiResponse(responseCode = "404", description = "Post not found")
+    @SecurityRequirement(name = "bearer-jwt")
     public ResponseEntity<PostResponse> updatePost(
             @PathVariable Long postId,
             @Valid @RequestBody UpdatePostRequest request,
@@ -63,7 +78,12 @@ public class PostController {
     }
 
     @DeleteMapping(Routes.POST_BY_ID)
-    @Operation(summary = "Delete post", description = "Delete authenticated user's post")
+    @Operation(summary = "Delete post", description = "Delete authenticated user's post (soft delete)")
+    @ApiResponse(responseCode = "204", description = "Post deleted")
+    @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token")
+    @ApiResponse(responseCode = "403", description = "Cannot delete another user's post")
+    @ApiResponse(responseCode = "404", description = "Post not found")
+    @SecurityRequirement(name = "bearer-jwt")
     public ResponseEntity<Void> deletePost(@PathVariable Long postId, Authentication authentication) {
         Long userId = userService.getCurrentUserId(authentication.getName());
         postService.deletePost(postId, userId);
@@ -72,6 +92,8 @@ public class PostController {
 
     @GetMapping(Routes.USER_POSTS)
     @Operation(summary = "Get user's posts", description = "Get all posts by specific user")
+    @ApiResponse(responseCode = "200", description = "List of posts")
+    @ApiResponse(responseCode = "404", description = "User not found")
     public ResponseEntity<List<PostResponse>> getUserPosts(@PathVariable Long userId) {
         return ResponseEntity.ok(postService.getUserPosts(userId));
     }

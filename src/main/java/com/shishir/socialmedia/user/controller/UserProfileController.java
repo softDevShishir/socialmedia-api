@@ -5,6 +5,8 @@ import com.shishir.socialmedia.user.dto.UserProfileResponse;
 import com.shishir.socialmedia.user.dto.UserUpdateRequest;
 import com.shishir.socialmedia.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,25 +23,35 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "User Profiles", description = "Public user profile management")
+@Tag(name = "Users", description = "User profiles: view, update, follow/unfollow")
 public class UserProfileController {
 
     private final UserService userService;
 
     @GetMapping(Routes.USERS)
     @Operation(summary = "Get all users", description = "Get list of all active users")
+    @ApiResponse(responseCode = "200", description = "List of users")
     public ResponseEntity<List<UserProfileResponse>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @GetMapping(Routes.USER_BY_USERNAME)
-    @Operation(summary = "Get user by username", description = "Get public profile of a user by username")
+    @Operation(summary = "Get user by username", description = "Get public profile of user by username")
+    @ApiResponse(responseCode = "200", description = "User profile found")
+    @ApiResponse(responseCode = "404", description = "User not found")
     public ResponseEntity<UserProfileResponse> getUserByUsername(@PathVariable String username) {
         return ResponseEntity.ok(userService.getUserByUsername(username));
     }
 
     @PutMapping(Routes.USER_BY_ID)
     @Operation(summary = "Update user profile", description = "Update authenticated user's profile")
+    @ApiResponse(responseCode = "200", description = "Profile updated")
+    @ApiResponse(responseCode = "400", description = "Validation failed")
+    @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token")
+    @ApiResponse(responseCode = "403", description = "Cannot update another user's profile")
+    @ApiResponse(responseCode = "404", description = "User not found")
+    @ApiResponse(responseCode = "409", description = "Username already taken")
+    @SecurityRequirement(name = "bearer-jwt")
     public ResponseEntity<UserProfileResponse> updateProfile(
             @PathVariable Long userId,
             @Valid @RequestBody UserUpdateRequest request,

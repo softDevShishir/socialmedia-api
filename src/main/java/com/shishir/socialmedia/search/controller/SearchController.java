@@ -7,6 +7,7 @@ import com.shishir.socialmedia.search.dto.SearchPostResponse;
 import com.shishir.socialmedia.search.dto.SearchUserResponse;
 import com.shishir.socialmedia.search.service.SearchService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "Search", description = "Search for users and posts")
+@Tag(name = "Search", description = "Search: find users and posts")
 public class SearchController {
 
     private static final int MAX_PAGE_SIZE = 50;
@@ -24,7 +25,9 @@ public class SearchController {
     private final SearchService searchService;
 
     @GetMapping(Routes.SEARCH_USERS)
-    @Operation(summary = "Search users", description = "Search for users by username")
+    @Operation(summary = "Search users", description = "Search for users by username (case-insensitive, paginated)")
+    @ApiResponse(responseCode = "200", description = "Search results")
+    @ApiResponse(responseCode = "400", description = "Invalid search query or pagination parameters")
     public ResponseEntity<PaginatedSearchResponse<SearchUserResponse>> searchUsers(
             @RequestParam String query,
             @RequestParam(defaultValue = "0") int page,
@@ -34,7 +37,9 @@ public class SearchController {
     }
 
     @GetMapping(Routes.SEARCH_POSTS)
-    @Operation(summary = "Search posts", description = "Search for posts by content")
+    @Operation(summary = "Search posts", description = "Search for posts by content (case-insensitive, paginated)")
+    @ApiResponse(responseCode = "200", description = "Search results")
+    @ApiResponse(responseCode = "400", description = "Invalid search query or pagination parameters")
     public ResponseEntity<PaginatedSearchResponse<SearchPostResponse>> searchPosts(
             @RequestParam String query,
             @RequestParam(defaultValue = "0") int page,

@@ -7,6 +7,8 @@ import com.shishir.socialmedia.comment.service.CommentService;
 import com.shishir.socialmedia.config.Routes;
 import com.shishir.socialmedia.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +27,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "Comments", description = "Comment management on posts")
+@Tag(name = "Comments", description = "Comment management: create, read, update, delete")
 public class CommentController {
 
     private final CommentService commentService;
@@ -33,6 +35,11 @@ public class CommentController {
 
     @PostMapping(Routes.POST_COMMENTS)
     @Operation(summary = "Create comment", description = "Create a new comment on a post")
+    @ApiResponse(responseCode = "201", description = "Comment created")
+    @ApiResponse(responseCode = "400", description = "Validation failed, or post is deleted")
+    @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token")
+    @ApiResponse(responseCode = "404", description = "Post not found")
+    @SecurityRequirement(name = "bearer-jwt")
     public ResponseEntity<CommentResponse> createComment(
             @PathVariable Long postId,
             @Valid @RequestBody CreateCommentRequest request,
@@ -44,18 +51,28 @@ public class CommentController {
 
     @GetMapping(Routes.POST_COMMENTS)
     @Operation(summary = "Get post comments", description = "Get all comments on a post")
+    @ApiResponse(responseCode = "200", description = "List of comments")
+    @ApiResponse(responseCode = "404", description = "Post not found")
     public ResponseEntity<List<CommentResponse>> getPostComments(@PathVariable Long postId) {
         return ResponseEntity.ok(commentService.getPostComments(postId));
     }
 
     @GetMapping(Routes.COMMENT_BY_ID)
     @Operation(summary = "Get comment", description = "Get specific comment details")
+    @ApiResponse(responseCode = "200", description = "Comment found")
+    @ApiResponse(responseCode = "404", description = "Comment not found")
     public ResponseEntity<CommentResponse> getCommentById(@PathVariable Long commentId) {
         return ResponseEntity.ok(commentService.getCommentById(commentId));
     }
 
     @PutMapping(Routes.COMMENT_BY_ID)
     @Operation(summary = "Update comment", description = "Update authenticated user's comment")
+    @ApiResponse(responseCode = "200", description = "Comment updated")
+    @ApiResponse(responseCode = "400", description = "Validation failed, or comment is deleted")
+    @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token")
+    @ApiResponse(responseCode = "403", description = "Cannot update another user's comment")
+    @ApiResponse(responseCode = "404", description = "Comment not found")
+    @SecurityRequirement(name = "bearer-jwt")
     public ResponseEntity<CommentResponse> updateComment(
             @PathVariable Long commentId,
             @Valid @RequestBody UpdateCommentRequest request,
@@ -65,7 +82,12 @@ public class CommentController {
     }
 
     @DeleteMapping(Routes.COMMENT_BY_ID)
-    @Operation(summary = "Delete comment", description = "Delete authenticated user's comment")
+    @Operation(summary = "Delete comment", description = "Delete authenticated user's comment (soft delete)")
+    @ApiResponse(responseCode = "204", description = "Comment deleted")
+    @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token")
+    @ApiResponse(responseCode = "403", description = "Cannot delete another user's comment")
+    @ApiResponse(responseCode = "404", description = "Comment not found")
+    @SecurityRequirement(name = "bearer-jwt")
     public ResponseEntity<Void> deleteComment(@PathVariable Long commentId, Authentication authentication) {
         Long userId = userService.getCurrentUserId(authentication.getName());
         commentService.deleteComment(commentId, userId);
