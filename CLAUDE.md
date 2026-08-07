@@ -8,7 +8,7 @@ Editing this CLAUDE.md file itself never requires asking the user for permission
 
 ## Project status
 
-Three features implemented end-to-end (entity → repository → service → controller → DTOs → tests): **User Management & Authentication** (register/login/JWT, profile CRUD), **Posts** (create/read/update/soft-delete, owned by a user), and **Comments** (create/read/update/soft-delete on a post, owned by a user, with an atomically-maintained `post.commentsCount`). Security infrastructure (`SecurityConfig`, JWT filter/provider, route constants, global exception handling) underlies all three.
+Six features implemented end-to-end (entity → repository → service → controller → DTOs → tests): **User Management & Authentication** (register/login/JWT, profile CRUD), **Posts**, **Comments**, **Likes**, **Follow** (follower/following graph via a self-referential `Follow` join entity), and **Feed** (personalized feed, per-user timeline, explore page — all paginated). Post/comment/like counters and follower/following counts are all maintained via atomic JPQL updates (`PostRepository`/`UserRepository`), not read-modify-write, to avoid lost updates under concurrent requests. Security infrastructure (`SecurityConfig`, JWT filter/provider, route constants, global exception handling) underlies all of it.
 
 `AuditData` (`@MappedSuperclass`) now carries `id` (`@Id @GeneratedValue(IDENTITY)`) in addition to `createdAt`/`updatedAt` — every entity extends it rather than declaring its own `id`.
 
@@ -25,6 +25,9 @@ Package layout is feature-based: `com.shishir.socialmedia.<feature>.{entity,repo
 - **Public (`permitAll`) response DTOs must not leak email.** `UserProfileResponse`/`PostDetailResponse` include an email field for authenticated "this is you" views; public-facing mapper methods (`mapToPublicProfileResponse`, the post detail mapper) must leave it unset.
 - **Resolving the current user:** take `org.springframework.security.core.Authentication` as a controller method parameter (Spring injects it automatically), then call `UserService.getCurrentUserId(authentication.getName())` — don't reach into `SecurityContextHolder` manually in controllers.
 - **Hibernate dialect:** use `org.hibernate.dialect.PostgreSQLDialect`. Versioned dialect classes from Hibernate 5 (`PostgreSQL16Dialect` etc.) don't exist in Hibernate 6 (what Spring Boot 3.3.0 uses) and fail app startup with a `ClassNotFoundException` buried under a `BeanCreationException`.
+- **Production classes (services, controllers) use constructor injection via `@RequiredArgsConstructor` on final fields — never `@Autowired` field injection.** Test classes are the deliberate exception: they use `@Autowired` field injection, which is the idiomatic, conventional pattern for `@SpringBootTest` classes. Don't convert test classes to constructor injection.
+- **A "check" or "list" endpoint whose own description says "the authenticated user" must actually require authentication** — don't permitAll it just because a given/example test calls it with no token. Fix the test to carry a real JWT (`jwtTokenProvider.generateToken(...)`) instead of weakening the endpoint. This has come up repeatedly (`checkIfUserLikedPost`, `checkIfFollowing`).
+- **When an endpoint's viewer and its subject can differ (e.g. viewing someone else's timeline), don't conflate them.** Thread the actual authenticated viewer through separately from whichever ID the URL/query param names — passing the wrong one silently computes things like "liked by current user" against the wrong person.
 
 ## JDK / Lombok
 

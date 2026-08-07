@@ -43,4 +43,9 @@ public class Routes {
     public static final String FOLLOW_USER = USERS + "/{userId}/follow";
     public static final String UNFOLLOW_USER = USERS + "/{userId}/unfollow";
     public static final String FOLLOW_CHECK = USERS + "/{userId}/follow/check";
+
+    // Feed routes
+    public static final String FEED = V1 + "/feed";
+    public static final String TIMELINE = V1 + "/timeline";
+    public static final String EXPLORE = V1 + "/explore";
 }

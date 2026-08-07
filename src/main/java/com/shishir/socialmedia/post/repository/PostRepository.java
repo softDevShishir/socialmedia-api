@@ -1,6 +1,8 @@
 package com.shishir.socialmedia.post.repository;
 
 import com.shishir.socialmedia.post.entity.Post;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -20,6 +22,12 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     long countByUserId(Long userId);
 
     boolean existsByIdAndUserId(Long postId, Long userId);
+
+    Page<Post> findByUserIdInAndIsDeletedFalseOrderByCreatedAtDesc(List<Long> userIds, Pageable pageable);
+
+    Page<Post> findByUserIdAndIsDeletedFalseOrderByCreatedAtDesc(Long userId, Pageable pageable);
+
+    Page<Post> findByIsDeletedFalseOrderByCreatedAtDesc(Pageable pageable);
 
     @Modifying
     @Query("UPDATE Post p SET p.commentsCount = p.commentsCount + 1 WHERE p.id = :postId")
