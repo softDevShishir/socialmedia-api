@@ -1,0 +1,12 @@
+.git
+.gitignore
+.maven
+target/
+*.md
+*.log
+.env
+.env.production
+.DS_Store
+node_modules/
+.idea/
+*.iml

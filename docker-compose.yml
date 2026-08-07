@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: socialmedia_postgres
+    environment:
+      POSTGRES_DB: socialmedia_db
+      POSTGRES_USER: socialmedia_user
+      POSTGRES_PASSWORD: socialmedia_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./src/main/resources/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./src/main/resources/database/data.sql:/docker-entrypoint-initdb.d/02-data.sql
+    networks:
+      - socialmedia_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U socialmedia_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: socialmedia_api
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/socialmedia_db
+      SPRING_DATASOURCE_USERNAME: socialmedia_user
+      SPRING_DATASOURCE_PASSWORD: socialmedia_password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+      SPRING_PROFILES_ACTIVE: prod
+      JWT_SECRET: your-secret-key-min-256-bits-long-for-production-change-this
+      JWT_EXPIRATION: 86400000
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - socialmedia_network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  socialmedia_network:
+    driver: bridge
