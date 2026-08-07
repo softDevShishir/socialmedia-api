@@ -2,6 +2,7 @@ package com.shishir.socialmedia.post.entity;
 
 import com.shishir.socialmedia.comment.entity.Comment;
 import com.shishir.socialmedia.config.AuditData;
+import com.shishir.socialmedia.like.entity.Like;
 import com.shishir.socialmedia.user.entity.User;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -32,7 +33,7 @@ import java.util.List;
 })
 @Getter
 @Setter
-@ToString(exclude = {"user", "comments"})
+@ToString(exclude = {"user", "comments", "likes"})
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
@@ -66,4 +67,8 @@ public class Post extends AuditData {
     @Builder.Default
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> comments = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Like> likes = new ArrayList<>();
 }

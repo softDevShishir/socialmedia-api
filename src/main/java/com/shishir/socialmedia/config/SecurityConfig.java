@@ -49,6 +49,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, Routes.USERS, Routes.USER_BY_USERNAME).permitAll()
                         .requestMatchers(HttpMethod.GET, Routes.POSTS, Routes.POST_BY_ID, Routes.USER_POSTS).permitAll()
                         .requestMatchers(HttpMethod.GET, Routes.POST_COMMENTS, Routes.COMMENT_BY_ID).permitAll()
+                        .requestMatchers(HttpMethod.GET, Routes.POST_LIKES).permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

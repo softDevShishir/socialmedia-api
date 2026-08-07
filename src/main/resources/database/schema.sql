@@ -53,3 +53,18 @@ CREATE INDEX IF NOT EXISTS idx_comment_post_id ON comments(post_id);
 CREATE INDEX IF NOT EXISTS idx_comment_user_id ON comments(user_id);
 CREATE INDEX IF NOT EXISTS idx_comment_created_at ON comments(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_comment_deleted ON comments(is_deleted);
+
+CREATE TABLE IF NOT EXISTS likes (
+    id BIGSERIAL PRIMARY KEY,
+    post_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_like_post_user UNIQUE (post_id, user_id),
+    CONSTRAINT fk_like_post FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_like_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_like_post_id ON likes(post_id);
+CREATE INDEX IF NOT EXISTS idx_like_user_id ON likes(user_id);
+CREATE INDEX IF NOT EXISTS idx_like_post_user ON likes(post_id, user_id);
