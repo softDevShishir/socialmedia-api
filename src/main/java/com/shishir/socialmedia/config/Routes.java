@@ -35,4 +35,12 @@ public class Routes {
     public static final String LIKES = V1 + "/likes";
     public static final String POST_LIKES = POSTS + "/{postId}/likes";
     public static final String POST_LIKE_CHECK = POST_LIKES + "/check";
+
+    // Follow routes
+    public static final String FOLLOWS = V1 + "/follows";
+    public static final String USER_FOLLOWERS = USERS + "/{userId}/followers";
+    public static final String USER_FOLLOWING = USERS + "/{userId}/following";
+    public static final String FOLLOW_USER = USERS + "/{userId}/follow";
+    public static final String UNFOLLOW_USER = USERS + "/{userId}/unfollow";
+    public static final String FOLLOW_CHECK = USERS + "/{userId}/follow/check";
 }

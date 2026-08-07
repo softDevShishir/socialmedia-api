@@ -1,6 +1,7 @@
 package com.shishir.socialmedia.user.entity;
 
 import com.shishir.socialmedia.config.AuditData;
+import com.shishir.socialmedia.follow.entity.Follow;
 import com.shishir.socialmedia.post.entity.Post;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -27,7 +28,7 @@ import java.util.List;
 @Table(name = "users")
 @Getter
 @Setter
-@ToString(exclude = {"password", "posts"})
+@ToString(exclude = {"password", "posts", "followers", "following"})
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
@@ -80,4 +81,12 @@ public class User extends AuditData {
     @Builder.Default
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Post> posts = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "following", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Follow> followers = new ArrayList<>();
+
+    @Builder.Default
+    @OneToMany(mappedBy = "follower", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Follow> following = new ArrayList<>();
 }

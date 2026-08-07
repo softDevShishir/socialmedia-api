@@ -68,3 +68,19 @@ CREATE TABLE IF NOT EXISTS likes (
 CREATE INDEX IF NOT EXISTS idx_like_post_id ON likes(post_id);
 CREATE INDEX IF NOT EXISTS idx_like_user_id ON likes(user_id);
 CREATE INDEX IF NOT EXISTS idx_like_post_user ON likes(post_id, user_id);
+
+CREATE TABLE IF NOT EXISTS follows (
+    id BIGSERIAL PRIMARY KEY,
+    follower_id BIGINT NOT NULL,
+    following_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_follow_follower_following UNIQUE (follower_id, following_id),
+    CONSTRAINT fk_follow_follower FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT fk_follow_following FOREIGN KEY (following_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT check_different_users CHECK (follower_id != following_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_follow_follower_id ON follows(follower_id);
+CREATE INDEX IF NOT EXISTS idx_follow_following_id ON follows(following_id);
+CREATE INDEX IF NOT EXISTS idx_follow_follower_following ON follows(follower_id, following_id);
