@@ -25,4 +25,9 @@ public class Routes {
     public static final String POSTS = V1 + "/posts";
     public static final String POST_BY_ID = POSTS + "/{postId}";
     public static final String USER_POSTS = USERS + "/{userId}/posts";
+
+    // Comment routes
+    public static final String COMMENTS = V1 + "/comments";
+    public static final String COMMENT_BY_ID = COMMENTS + "/{commentId}";
+    public static final String POST_COMMENTS = POSTS + "/{postId}/comments";
 }

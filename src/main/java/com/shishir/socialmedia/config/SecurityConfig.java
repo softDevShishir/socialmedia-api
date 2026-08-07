@@ -48,6 +48,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, Routes.AUTH_REGISTER, Routes.AUTH_LOGIN).permitAll()
                         .requestMatchers(HttpMethod.GET, Routes.USERS, Routes.USER_BY_USERNAME).permitAll()
                         .requestMatchers(HttpMethod.GET, Routes.POSTS, Routes.POST_BY_ID, Routes.USER_POSTS).permitAll()
+                        .requestMatchers(HttpMethod.GET, Routes.POST_COMMENTS, Routes.COMMENT_BY_ID).permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

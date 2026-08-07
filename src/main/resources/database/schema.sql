@@ -35,3 +35,21 @@ CREATE TABLE IF NOT EXISTS posts (
 CREATE INDEX IF NOT EXISTS idx_post_user_id ON posts(user_id);
 CREATE INDEX IF NOT EXISTS idx_post_created_at ON posts(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_post_deleted ON posts(is_deleted);
+
+CREATE TABLE IF NOT EXISTS comments (
+    id BIGSERIAL PRIMARY KEY,
+    content TEXT NOT NULL,
+    post_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    likes_count INTEGER NOT NULL DEFAULT 0,
+    is_deleted BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_comment_post FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    CONSTRAINT fk_comment_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_comment_post_id ON comments(post_id);
+CREATE INDEX IF NOT EXISTS idx_comment_user_id ON comments(user_id);
+CREATE INDEX IF NOT EXISTS idx_comment_created_at ON comments(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_comment_deleted ON comments(is_deleted);

@@ -1,16 +1,14 @@
-package com.shishir.socialmedia.post.entity;
+package com.shishir.socialmedia.comment.entity;
 
-import com.shishir.socialmedia.comment.entity.Comment;
 import com.shishir.socialmedia.config.AuditData;
+import com.shishir.socialmedia.post.entity.Post;
 import com.shishir.socialmedia.user.entity.User;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -22,30 +20,29 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Entity
-@Table(name = "posts", indexes = {
-        @Index(name = "idx_post_user_id", columnList = "user_id"),
-        @Index(name = "idx_post_created_at", columnList = "created_at")
+@Table(name = "comments", indexes = {
+        @Index(name = "idx_comment_post_id", columnList = "post_id"),
+        @Index(name = "idx_comment_user_id", columnList = "user_id"),
+        @Index(name = "idx_comment_created_at", columnList = "created_at")
 })
 @Getter
 @Setter
-@ToString(exclude = {"user", "comments"})
+@ToString(exclude = {"post", "user"})
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Post extends AuditData {
+public class Comment extends AuditData {
 
     @Column(nullable = false, columnDefinition = "TEXT")
-    @NotBlank(message = "Content cannot be blank")
-    @Size(min = 1, max = 5000, message = "Content must be between 1 and 5000 characters")
+    @NotBlank(message = "Comment content cannot be blank")
+    @Size(min = 1, max = 1000, message = "Comment must be between 1 and 1000 characters")
     private String content;
 
-    @Column(name = "media_url")
-    private String mediaUrl;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id", nullable = false)
+    private Post post;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -56,14 +53,6 @@ public class Post extends AuditData {
     private Integer likesCount = 0;
 
     @Builder.Default
-    @Column(name = "comments_count")
-    private Integer commentsCount = 0;
-
-    @Builder.Default
     @Column(name = "is_deleted")
     private Boolean isDeleted = false;
-
-    @Builder.Default
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Comment> comments = new ArrayList<>();
 }
