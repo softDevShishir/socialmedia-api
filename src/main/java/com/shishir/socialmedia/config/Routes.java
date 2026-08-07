@@ -48,4 +48,9 @@ public class Routes {
     public static final String FEED = V1 + "/feed";
     public static final String TIMELINE = V1 + "/timeline";
     public static final String EXPLORE = V1 + "/explore";
+
+    // Search routes
+    public static final String SEARCH = V1 + "/search";
+    public static final String SEARCH_USERS = SEARCH + "/users";
+    public static final String SEARCH_POSTS = SEARCH + "/posts";
 }

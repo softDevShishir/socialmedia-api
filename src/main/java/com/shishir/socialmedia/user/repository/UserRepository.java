@@ -1,6 +1,8 @@
 package com.shishir.socialmedia.user.repository;
 
 import com.shishir.socialmedia.user.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -37,4 +39,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Modifying
     @Query("UPDATE User u SET u.followingCount = GREATEST(u.followingCount - 1, 0) WHERE u.id = :userId")
     void decrementFollowingCount(@Param("userId") Long userId);
+
+    Page<User> findByUsernameContainingIgnoreCaseAndIsActiveTrue(String username, Pageable pageable);
+
+    @Query("SELECT u FROM User u WHERE (LOWER(u.firstName) LIKE LOWER(CONCAT('%', :firstName, '%')) "
+            + "OR LOWER(u.lastName) LIKE LOWER(CONCAT('%', :lastName, '%'))) AND u.isActive = true")
+    Page<User> findByFirstNameContainingIgnoreCaseOrLastNameContainingIgnoreCaseAndIsActiveTrue(
+            @Param("firstName") String firstName, @Param("lastName") String lastName, Pageable pageable);
+
+    Page<User> findByBioContainingIgnoreCaseAndIsActiveTrue(String bio, Pageable pageable);
 }

@@ -44,4 +44,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Modifying
     @Query("UPDATE Post p SET p.likesCount = GREATEST(p.likesCount - 1, 0) WHERE p.id = :postId")
     void decrementLikesCount(@Param("postId") Long postId);
+
+    Page<Post> findByContentContainingIgnoreCaseAndIsDeletedFalse(String content, Pageable pageable);
+
+    Page<Post> findByUserUsernameContainingIgnoreCaseAndIsDeletedFalse(String username, Pageable pageable);
 }
