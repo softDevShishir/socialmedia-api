@@ -7,6 +7,7 @@ import com.shishir.socialmedia.comment.service.CommentService;
 import com.shishir.socialmedia.config.Routes;
 import com.shishir.socialmedia.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -41,7 +42,7 @@ public class CommentController {
     @ApiResponse(responseCode = "404", description = "Post not found")
     @SecurityRequirement(name = "bearer-jwt")
     public ResponseEntity<CommentResponse> createComment(
-            @PathVariable Long postId,
+            @Parameter(description = "ID of the post to comment on") @PathVariable Long postId,
             @Valid @RequestBody CreateCommentRequest request,
             Authentication authentication) {
         Long userId = userService.getCurrentUserId(authentication.getName());
@@ -53,7 +54,8 @@ public class CommentController {
     @Operation(summary = "Get post comments", description = "Get all comments on a post")
     @ApiResponse(responseCode = "200", description = "List of comments")
     @ApiResponse(responseCode = "404", description = "Post not found")
-    public ResponseEntity<List<CommentResponse>> getPostComments(@PathVariable Long postId) {
+    public ResponseEntity<List<CommentResponse>> getPostComments(
+            @Parameter(description = "ID of the post whose comments to retrieve") @PathVariable Long postId) {
         return ResponseEntity.ok(commentService.getPostComments(postId));
     }
 
@@ -61,7 +63,8 @@ public class CommentController {
     @Operation(summary = "Get comment", description = "Get specific comment details")
     @ApiResponse(responseCode = "200", description = "Comment found")
     @ApiResponse(responseCode = "404", description = "Comment not found")
-    public ResponseEntity<CommentResponse> getCommentById(@PathVariable Long commentId) {
+    public ResponseEntity<CommentResponse> getCommentById(
+            @Parameter(description = "ID of the comment to retrieve") @PathVariable Long commentId) {
         return ResponseEntity.ok(commentService.getCommentById(commentId));
     }
 
@@ -74,7 +77,7 @@ public class CommentController {
     @ApiResponse(responseCode = "404", description = "Comment not found")
     @SecurityRequirement(name = "bearer-jwt")
     public ResponseEntity<CommentResponse> updateComment(
-            @PathVariable Long commentId,
+            @Parameter(description = "ID of the comment to update") @PathVariable Long commentId,
             @Valid @RequestBody UpdateCommentRequest request,
             Authentication authentication) {
         Long userId = userService.getCurrentUserId(authentication.getName());
@@ -88,7 +91,8 @@ public class CommentController {
     @ApiResponse(responseCode = "403", description = "Cannot delete another user's comment")
     @ApiResponse(responseCode = "404", description = "Comment not found")
     @SecurityRequirement(name = "bearer-jwt")
-    public ResponseEntity<Void> deleteComment(@PathVariable Long commentId, Authentication authentication) {
+    public ResponseEntity<Void> deleteComment(
+            @Parameter(description = "ID of the comment to delete") @PathVariable Long commentId, Authentication authentication) {
         Long userId = userService.getCurrentUserId(authentication.getName());
         commentService.deleteComment(commentId, userId);
         return ResponseEntity.noContent().build();

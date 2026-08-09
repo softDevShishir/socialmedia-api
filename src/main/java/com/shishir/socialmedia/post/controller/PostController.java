@@ -8,6 +8,7 @@ import com.shishir.socialmedia.post.dto.UpdatePostRequest;
 import com.shishir.socialmedia.post.service.PostService;
 import com.shishir.socialmedia.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -57,7 +58,8 @@ public class PostController {
     @Operation(summary = "Get post by ID", description = "Get specific post with details")
     @ApiResponse(responseCode = "200", description = "Post found")
     @ApiResponse(responseCode = "404", description = "Post not found")
-    public ResponseEntity<PostDetailResponse> getPostById(@PathVariable Long postId) {
+    public ResponseEntity<PostDetailResponse> getPostById(
+            @Parameter(description = "ID of the post to retrieve") @PathVariable Long postId) {
         return ResponseEntity.ok(postService.getPostDetailById(postId));
     }
 
@@ -70,7 +72,7 @@ public class PostController {
     @ApiResponse(responseCode = "404", description = "Post not found")
     @SecurityRequirement(name = "bearer-jwt")
     public ResponseEntity<PostResponse> updatePost(
-            @PathVariable Long postId,
+            @Parameter(description = "ID of the post to update") @PathVariable Long postId,
             @Valid @RequestBody UpdatePostRequest request,
             Authentication authentication) {
         Long userId = userService.getCurrentUserId(authentication.getName());
@@ -84,7 +86,8 @@ public class PostController {
     @ApiResponse(responseCode = "403", description = "Cannot delete another user's post")
     @ApiResponse(responseCode = "404", description = "Post not found")
     @SecurityRequirement(name = "bearer-jwt")
-    public ResponseEntity<Void> deletePost(@PathVariable Long postId, Authentication authentication) {
+    public ResponseEntity<Void> deletePost(
+            @Parameter(description = "ID of the post to delete") @PathVariable Long postId, Authentication authentication) {
         Long userId = userService.getCurrentUserId(authentication.getName());
         postService.deletePost(postId, userId);
         return ResponseEntity.noContent().build();
@@ -94,7 +97,8 @@ public class PostController {
     @Operation(summary = "Get user's posts", description = "Get all posts by specific user")
     @ApiResponse(responseCode = "200", description = "List of posts")
     @ApiResponse(responseCode = "404", description = "User not found")
-    public ResponseEntity<List<PostResponse>> getUserPosts(@PathVariable Long userId) {
+    public ResponseEntity<List<PostResponse>> getUserPosts(
+            @Parameter(description = "ID of the user whose posts to retrieve") @PathVariable Long userId) {
         return ResponseEntity.ok(postService.getUserPosts(userId));
     }
 }

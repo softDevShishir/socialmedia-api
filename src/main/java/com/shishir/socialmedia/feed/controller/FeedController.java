@@ -6,6 +6,7 @@ import com.shishir.socialmedia.feed.dto.PaginatedFeedResponse;
 import com.shishir.socialmedia.feed.service.FeedService;
 import com.shishir.socialmedia.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,8 +33,8 @@ public class FeedController {
     @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token")
     @SecurityRequirement(name = "bearer-jwt")
     public ResponseEntity<PaginatedFeedResponse> getUserFeed(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int pageSize,
+            @Parameter(description = "Zero-based page number") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Number of posts per page (max 100)") @RequestParam(defaultValue = "10") int pageSize,
             Authentication authentication) {
         validatePagination(page, pageSize);
         Long userId = userService.getCurrentUserId(authentication.getName());
@@ -47,9 +48,9 @@ public class FeedController {
     @ApiResponse(responseCode = "400", description = "Invalid pagination parameters")
     @ApiResponse(responseCode = "404", description = "User not found")
     public ResponseEntity<PaginatedFeedResponse> getTimeline(
-            @RequestParam Long userId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int pageSize,
+            @Parameter(description = "ID of the user whose timeline to retrieve") @RequestParam Long userId,
+            @Parameter(description = "Zero-based page number") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Number of posts per page (max 100)") @RequestParam(defaultValue = "10") int pageSize,
             Authentication authentication) {
         validatePagination(page, pageSize);
         Long currentUserId = resolveOptionalCurrentUserId(authentication);
@@ -61,8 +62,8 @@ public class FeedController {
     @ApiResponse(responseCode = "200", description = "Paginated explore feed")
     @ApiResponse(responseCode = "400", description = "Invalid pagination parameters")
     public ResponseEntity<PaginatedFeedResponse> getExploreFeed(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int pageSize,
+            @Parameter(description = "Zero-based page number") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Number of posts per page (max 100)") @RequestParam(defaultValue = "10") int pageSize,
             Authentication authentication) {
         validatePagination(page, pageSize);
         Long currentUserId = resolveOptionalCurrentUserId(authentication);

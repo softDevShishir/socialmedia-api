@@ -5,6 +5,7 @@ import com.shishir.socialmedia.user.dto.UserProfileResponse;
 import com.shishir.socialmedia.user.dto.UserUpdateRequest;
 import com.shishir.socialmedia.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -39,7 +40,8 @@ public class UserProfileController {
     @Operation(summary = "Get user by username", description = "Get public profile of user by username")
     @ApiResponse(responseCode = "200", description = "User profile found")
     @ApiResponse(responseCode = "404", description = "User not found")
-    public ResponseEntity<UserProfileResponse> getUserByUsername(@PathVariable String username) {
+    public ResponseEntity<UserProfileResponse> getUserByUsername(
+            @Parameter(description = "Username of the user to retrieve") @PathVariable String username) {
         return ResponseEntity.ok(userService.getUserByUsername(username));
     }
 
@@ -53,7 +55,7 @@ public class UserProfileController {
     @ApiResponse(responseCode = "409", description = "Username already taken")
     @SecurityRequirement(name = "bearer-jwt")
     public ResponseEntity<UserProfileResponse> updateProfile(
-            @PathVariable Long userId,
+            @Parameter(description = "ID of the user whose profile to update") @PathVariable Long userId,
             @Valid @RequestBody UserUpdateRequest request,
             Authentication authentication) {
 

@@ -7,6 +7,7 @@ import com.shishir.socialmedia.search.dto.SearchPostResponse;
 import com.shishir.socialmedia.search.dto.SearchUserResponse;
 import com.shishir.socialmedia.search.service.SearchService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -29,9 +30,9 @@ public class SearchController {
     @ApiResponse(responseCode = "200", description = "Search results")
     @ApiResponse(responseCode = "400", description = "Invalid search query or pagination parameters")
     public ResponseEntity<PaginatedSearchResponse<SearchUserResponse>> searchUsers(
-            @RequestParam String query,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int pageSize) {
+            @Parameter(description = "Username substring to search for (case-insensitive)") @RequestParam String query,
+            @Parameter(description = "Zero-based page number") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Number of results per page (max " + MAX_PAGE_SIZE + ")") @RequestParam(defaultValue = "10") int pageSize) {
         validatePagination(page, pageSize);
         return ResponseEntity.ok(searchService.searchUsers(query, page, pageSize));
     }
@@ -41,9 +42,9 @@ public class SearchController {
     @ApiResponse(responseCode = "200", description = "Search results")
     @ApiResponse(responseCode = "400", description = "Invalid search query or pagination parameters")
     public ResponseEntity<PaginatedSearchResponse<SearchPostResponse>> searchPosts(
-            @RequestParam String query,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int pageSize) {
+            @Parameter(description = "Content substring to search for (case-insensitive)") @RequestParam String query,
+            @Parameter(description = "Zero-based page number") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Number of results per page (max " + MAX_PAGE_SIZE + ")") @RequestParam(defaultValue = "10") int pageSize) {
         validatePagination(page, pageSize);
         return ResponseEntity.ok(searchService.searchPosts(query, page, pageSize));
     }

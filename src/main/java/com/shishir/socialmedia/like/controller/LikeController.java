@@ -6,6 +6,7 @@ import com.shishir.socialmedia.like.dto.LikeResponse;
 import com.shishir.socialmedia.like.service.LikeService;
 import com.shishir.socialmedia.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,7 +38,8 @@ public class LikeController {
     @ApiResponse(responseCode = "404", description = "Post not found")
     @ApiResponse(responseCode = "409", description = "Already liked this post")
     @SecurityRequirement(name = "bearer-jwt")
-    public ResponseEntity<LikeResponse> likePost(@PathVariable Long postId, Authentication authentication) {
+    public ResponseEntity<LikeResponse> likePost(
+            @Parameter(description = "ID of the post to like") @PathVariable Long postId, Authentication authentication) {
         Long userId = userService.getCurrentUserId(authentication.getName());
         LikeResponse response = likeService.likePost(postId, userId);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -49,7 +51,8 @@ public class LikeController {
     @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token")
     @ApiResponse(responseCode = "404", description = "Post was not liked by this user")
     @SecurityRequirement(name = "bearer-jwt")
-    public ResponseEntity<Void> unlikePost(@PathVariable Long postId, Authentication authentication) {
+    public ResponseEntity<Void> unlikePost(
+            @Parameter(description = "ID of the post to unlike") @PathVariable Long postId, Authentication authentication) {
         Long userId = userService.getCurrentUserId(authentication.getName());
         likeService.unlikePost(postId, userId);
         return ResponseEntity.noContent().build();
@@ -59,7 +62,8 @@ public class LikeController {
     @Operation(summary = "Get post likes", description = "Get all users who liked a post")
     @ApiResponse(responseCode = "200", description = "List of likes")
     @ApiResponse(responseCode = "404", description = "Post not found")
-    public ResponseEntity<List<LikeResponse>> getPostLikes(@PathVariable Long postId) {
+    public ResponseEntity<List<LikeResponse>> getPostLikes(
+            @Parameter(description = "ID of the post to get likes for") @PathVariable Long postId) {
         return ResponseEntity.ok(likeService.getPostLikes(postId));
     }
 
@@ -68,7 +72,8 @@ public class LikeController {
     @ApiResponse(responseCode = "200", description = "Like status")
     @ApiResponse(responseCode = "401", description = "Missing or invalid JWT token")
     @SecurityRequirement(name = "bearer-jwt")
-    public ResponseEntity<LikeCheckResponse> checkIfUserLikedPost(@PathVariable Long postId, Authentication authentication) {
+    public ResponseEntity<LikeCheckResponse> checkIfUserLikedPost(
+            @Parameter(description = "ID of the post to check like status for") @PathVariable Long postId, Authentication authentication) {
         Long userId = userService.getCurrentUserId(authentication.getName());
         return ResponseEntity.ok(likeService.checkIfUserLikedPost(postId, userId));
     }
