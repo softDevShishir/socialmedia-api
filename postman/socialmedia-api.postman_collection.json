@@ -1,0 +1,1126 @@
+{
+  "info": {
+    "_postman_id": "b1e6f2a0-4c2e-4a3a-9b0d-socialmedia-api",
+    "name": "Social Media REST API",
+    "description": "Complete API collection for the Social Media platform (Spring Boot 3.3.0 / Java 21, package `com.shishir.socialmedia`).\n\nCovers all seven implemented features: Authentication (register/login/JWT), Users, Posts, Comments, Likes, Follow, Feed & Timeline, and Search.\n\n## Auth model\nThe collection uses collection-level Bearer auth backed by the `{{jwt_token}}` variable, so every request inherits it automatically. Endpoints that are `permitAll()` in `SecurityConfig` (public GETs, register, login) explicitly override auth to \"No Auth\" so they work with an empty token too.\n\n## Quick start\n1. Import this collection and the `socialmedia-api-environment.json` environment, then select it (top-right dropdown).\n2. Run **Authentication > Register User**, then **Authentication > Login User** — its Tests script automatically saves `jwt_token`, `user_id`, and `username` into the active environment.\n3. Run **Posts > Create Post** — saves `post_id`. Run **Comments > Create Comment** — saves `comment_id`.\n4. Everything else now works out of the box.\n\n## Switching environments\nImport `socialmedia-api-environment.json` (local dev, `http://localhost:8080`) or `socialmedia-api-production.json` (prod placeholder URL) and swap between them from the environment dropdown — every request uses `{{base_url}}`, so nothing else needs to change.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Collection-level pre-request script.",
+          "// Runs before every request; currently a no-op hook kept for future shared setup",
+          "// (e.g. auto-refreshing an expiring token) without needing to touch every request."
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Collection-level test script, runs after every request's own Tests script.",
+          "pm.test('Response time is acceptable (< 5000ms)', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "pm.test('Response has JSON content-type (when body present)', function () {",
+          "    if (pm.response.code !== 204 && pm.response.body && pm.response.body.length) {",
+          "        pm.expect(pm.response.headers.get('Content-Type')).to.include('application/json');",
+          "    }",
+          "});"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "description": "Register, login, and fetch the authenticated user's own profile from a JWT (`AuthController`).",
+      "item": [
+        {
+          "name": "Register User",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\",\n  \"username\": \"{{test_username}}\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "description": "Create a new user account. Validation: email must be valid, password min 8 chars, username 3-50 chars.\n\n**Responses:** 201 Created, 400 validation failed, 409 email/username already exists."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response has user profile fields', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('id');",
+                  "    pm.expect(json).to.have.property('username');",
+                  "    pm.expect(json).to.have.property('email');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    pm.environment.set('user_id', json.id);",
+                  "    pm.environment.set('username', json.username);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Authenticate with email/password and receive a JWT.\n\n**Responses:** 200 OK with `LoginResponse` (token, type, userId, username, email, expiresIn), 401 invalid password, 404 no account with this email."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response contains a JWT token', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('token');",
+                  "    pm.expect(json.token).to.be.a('string').and.not.empty;",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    pm.environment.set('jwt_token', json.token);",
+                  "    pm.environment.set('user_id', json.userId);",
+                  "    pm.environment.set('username', json.username);",
+                  "    console.log('Saved jwt_token, user_id, username to environment');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "auth", "me"]
+            },
+            "description": "Get the authenticated user's own profile, resolved from the JWT.\n\n**Auth required.** Responses: 200 OK, 401 missing/invalid token."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returned profile matches logged-in user', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(String(json.id)).to.eql(String(pm.environment.get('user_id')));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "description": "User profile listing, lookup, and update (`UserProfileController`). List/get-by-username are public; update requires auth and ownership.",
+      "item": [
+        {
+          "name": "Get All Users",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users"]
+            },
+            "description": "Get list of all active users. Public endpoint."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response is an array', function () {",
+                  "    pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get User by Username",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{username}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{username}}"]
+            },
+            "description": "Get the public profile of a user by username (no email field). Public endpoint.\n\n**Responses:** 200 OK, 404 not found."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    pm.environment.set('user_id', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update User Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"bio\": \"Updated bio from Postman\",\n  \"profileImage\": \"https://example.com/avatar.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{user_id}}"]
+            },
+            "description": "Update the authenticated user's own profile. `userId` in the path must match the caller's own ID.\n\n**Auth required.** Responses: 200 OK, 400 validation failed, 401 missing/invalid token, 403 not your profile, 404 not found, 409 username taken."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Bio was updated', function () {",
+                  "    pm.expect(pm.response.json().bio).to.eql('Updated bio from Postman');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Posts",
+      "description": "Post CRUD (`PostController`). Create/update/delete require auth and ownership; reads are public.",
+      "item": [
+        {
+          "name": "Create Post",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"This is my first post!\",\n  \"mediaUrl\": \"https://example.com/image.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "posts"]
+            },
+            "description": "Create a new post. `content` is required (1-5000 chars); `mediaUrl` is optional.\n\n**Auth required.** Responses: 201 Created, 400 validation failed, 401 missing/invalid token."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    pm.environment.set('post_id', pm.response.json().id);",
+                  "    console.log('Saved post_id to environment');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Posts",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "posts"]
+            },
+            "description": "Get all posts, most recent first. Public endpoint."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Post by ID",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/{{post_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "posts", "{{post_id}}"]
+            },
+            "description": "Get a single post with full detail (includes author bio/email when viewed by the owner). Public endpoint.\n\n**Responses:** 200 OK, 404 not found."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Post",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Updated post content\",\n  \"mediaUrl\": \"https://example.com/image.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/{{post_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "posts", "{{post_id}}"]
+            },
+            "description": "Update a post you own.\n\n**Auth required.** Responses: 200 OK, 400 validation failed / post deleted, 401 missing/invalid token, 403 not your post, 404 not found."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Content was updated', function () {",
+                  "    pm.expect(pm.response.json().content).to.eql('Updated post content');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get User Posts",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{user_id}}/posts",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{user_id}}", "posts"]
+            },
+            "description": "Get all posts by a specific user. Public endpoint.\n\n**Responses:** 200 OK, 404 user not found."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Post",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/{{post_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "posts", "{{post_id}}"]
+            },
+            "description": "Soft-delete a post you own. Placed last in this folder since it invalidates `{{post_id}}` for the requests above — run it deliberately, not as part of a top-to-bottom collection run.\n\n**Auth required.** Responses: 204 No Content, 401 missing/invalid token, 403 not your post, 404 not found."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Comments",
+      "description": "Comment CRUD on posts (`CommentController`). Create/update/delete require auth and ownership; reads are public.",
+      "item": [
+        {
+          "name": "Create Comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Great post!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/{{post_id}}/comments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "posts", "{{post_id}}", "comments"]
+            },
+            "description": "Add a comment to a post. `content` required, 1-1000 chars.\n\n**Auth required.** Responses: 201 Created, 400 validation failed / post deleted, 401 missing/invalid token, 404 post not found."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    pm.environment.set('comment_id', pm.response.json().id);",
+                  "    console.log('Saved comment_id to environment');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Post Comments",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/{{post_id}}/comments",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "posts", "{{post_id}}", "comments"]
+            },
+            "description": "Get all comments on a post. Public endpoint.\n\n**Responses:** 200 OK, 404 post not found."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Comment by ID",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/comments/{{comment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "comments", "{{comment_id}}"]
+            },
+            "description": "Get a single comment by ID. Public endpoint.\n\n**Responses:** 200 OK, 404 not found."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Comment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Updated comment\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/comments/{{comment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "comments", "{{comment_id}}"]
+            },
+            "description": "Update a comment you own.\n\n**Auth required.** Responses: 200 OK, 400 validation failed / comment deleted, 401 missing/invalid token, 403 not your comment, 404 not found."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Content was updated', function () {",
+                  "    pm.expect(pm.response.json().content).to.eql('Updated comment');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Comment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/comments/{{comment_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "comments", "{{comment_id}}"]
+            },
+            "description": "Soft-delete a comment you own. Placed last in this folder since it invalidates `{{comment_id}}` for the requests above.\n\n**Auth required.** Responses: 204 No Content, 401 missing/invalid token, 403 not your comment, 404 not found."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Likes",
+      "description": "Like/unlike posts and check like status (`LikeController`). Reads of the like list are public; liking/unliking/checking require auth.",
+      "item": [
+        {
+          "name": "Like Post",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/{{post_id}}/likes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "posts", "{{post_id}}", "likes"]
+            },
+            "description": "Like a post.\n\n**Auth required.** Responses: 201 Created, 400 post deleted, 401 missing/invalid token, 404 post not found, 409 already liked."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Post Likes",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/{{post_id}}/likes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "posts", "{{post_id}}", "likes"]
+            },
+            "description": "Get all users who liked a post. Public endpoint.\n\n**Responses:** 200 OK, 404 post not found."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check if User Liked Post",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/{{post_id}}/likes/check",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "posts", "{{post_id}}", "likes", "check"]
+            },
+            "description": "Check whether the authenticated user liked this post.\n\n**Auth required** (this checks the caller's own like status, so it is intentionally not `permitAll`). Responses: 200 OK, 401 missing/invalid token."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('liked is true after Like Post ran', function () {",
+                  "    pm.expect(pm.response.json().liked).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unlike Post",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/posts/{{post_id}}/likes",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "posts", "{{post_id}}", "likes"]
+            },
+            "description": "Unlike a post. Placed after the check request so a top-to-bottom folder run demonstrates liked -> checked -> unliked.\n\n**Auth required.** Responses: 204 No Content, 401 missing/invalid token, 404 not currently liked."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 204', function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Follow",
+      "description": "Follow/unfollow users and query the follower/following graph (`FollowController`). Followers/following lists are public; follow/unfollow/check require auth.",
+      "item": [
+        {
+          "name": "Follow User",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{target_user_id}}/follow",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{target_user_id}}", "follow"]
+            },
+            "description": "Follow another user. Uses `{{target_user_id}}` (distinct from `{{user_id}}`, the logged-in caller) since you cannot follow yourself.\n\n**Auth required.** Responses: 201 Created, 400 cannot follow yourself, 401 missing/invalid token, 404 user not found, 409 already following."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get User Followers",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{target_user_id}}/followers",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{target_user_id}}", "followers"]
+            },
+            "description": "Get the list of users following the given user. Public endpoint.\n\n**Responses:** 200 OK, 404 user not found."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get User Following",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{user_id}}/following",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{user_id}}", "following"]
+            },
+            "description": "Get the list of users the given user is following. Public endpoint.\n\n**Responses:** 200 OK, 404 user not found."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Check if Following",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{target_user_id}}/follow/check",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{target_user_id}}", "follow", "check"]
+            },
+            "description": "Check whether the authenticated user is following the given user.\n\n**Auth required** (checks the caller's own follow status). Responses: 200 OK, 401 missing/invalid token, 404 user not found."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('following is true after Follow User ran', function () {",
+                  "    pm.expect(pm.response.json().following).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unfollow User",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/users/{{target_user_id}}/unfollow",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "users", "{{target_user_id}}", "unfollow"]
+            },
+            "description": "Unfollow a user. Placed after the check request so a top-to-bottom folder run demonstrates followed -> checked -> unfollowed. Note this returns 200 with a body, not 204.\n\n**Auth required.** Responses: 200 OK, 401 missing/invalid token, 404 not currently following."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('action reflects unfollow', function () {",
+                  "    pm.expect(pm.response.json().action).to.eql('UNFOLLOWED');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Feed & Timeline",
+      "description": "Personalized feed, per-user timeline, and the explore page (`FeedController`), all paginated. Feed requires auth (it's built from who you follow); timeline and explore work with or without a token.",
+      "item": [
+        {
+          "name": "Get User Feed",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/feed?page=0&pageSize=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "feed"],
+              "query": [
+                { "key": "page", "value": "0", "description": "Zero-based page number" },
+                { "key": "pageSize", "value": "10", "description": "Posts per page (max 100)" }
+              ]
+            },
+            "description": "Get the authenticated user's personalized feed: posts from followed users, paginated.\n\n**Auth required.** Responses: 200 OK, 400 invalid pagination, 401 missing/invalid token."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has pagination fields', function () {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('posts');",
+                  "    pm.expect(json).to.have.property('totalPages');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get User Timeline",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/timeline?userId={{user_id}}&page=0&pageSize=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "timeline"],
+              "query": [
+                { "key": "userId", "value": "{{user_id}}", "description": "ID of the user whose timeline to view" },
+                { "key": "page", "value": "0", "description": "Zero-based page number" },
+                { "key": "pageSize", "value": "10", "description": "Posts per page (max 100)" }
+              ]
+            },
+            "description": "Get all posts by a specific user, paginated. Works with or without a token — set to No Auth here, but sending a valid `{{jwt_token}}` (via the collection's inherited Bearer auth) additionally marks whether the caller liked each post.\n\n**Responses:** 200 OK, 400 invalid pagination, 404 user not found."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Explore Feed",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/explore?page=0&pageSize=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "explore"],
+              "query": [
+                { "key": "page", "value": "0", "description": "Zero-based page number" },
+                { "key": "pageSize", "value": "10", "description": "Posts per page (max 100)" }
+              ]
+            },
+            "description": "Get a feed of all public posts for discovery, paginated. Public endpoint (works with or without a token, same as Timeline).\n\n**Responses:** 200 OK, 400 invalid pagination."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Search",
+      "description": "Search users by username and posts by content, both case-insensitive and paginated (`SearchController`). Fully public.",
+      "item": [
+        {
+          "name": "Search Users",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/search/users?query=test&page=0&pageSize=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "search", "users"],
+              "query": [
+                { "key": "query", "value": "test", "description": "Username substring to search for" },
+                { "key": "page", "value": "0", "description": "Zero-based page number" },
+                { "key": "pageSize", "value": "10", "description": "Results per page (max 50)" }
+              ]
+            },
+            "description": "Search for users by username substring (case-insensitive), paginated. Public endpoint.\n\n**Responses:** 200 OK, 400 invalid query/pagination."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has results array', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('results');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search Posts",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/search/posts?query=spring&page=0&pageSize=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "search", "posts"],
+              "query": [
+                { "key": "query", "value": "spring", "description": "Content substring to search for" },
+                { "key": "page", "value": "0", "description": "Zero-based page number" },
+                { "key": "pageSize", "value": "10", "description": "Results per page (max 50)" }
+              ]
+            },
+            "description": "Search for posts by content substring (case-insensitive), paginated. Public endpoint.\n\n**Responses:** 200 OK, 400 invalid query/pagination."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has results array', function () {",
+                  "    pm.expect(pm.response.json()).to.have.property('results');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080",
+      "description": "Server base URL. Swap via the environment file, not by editing this collection variable, when moving between dev/prod."
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "description": "JWT returned by Login User (auto-filled by that request's Tests script). Used by the collection-level Bearer auth."
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "description": "ID of the currently logged-in user (auto-filled by Register/Login/Get User by Username)."
+    },
+    {
+      "key": "target_user_id",
+      "value": "2",
+      "description": "ID of a *different* user to follow/unfollow or view followers for — set manually to a second registered account's ID, since you cannot follow yourself."
+    },
+    {
+      "key": "post_id",
+      "value": "",
+      "description": "ID of the most recently created/fetched post (auto-filled by Create Post)."
+    },
+    {
+      "key": "comment_id",
+      "value": "",
+      "description": "ID of the most recently created comment (auto-filled by Create Comment)."
+    },
+    {
+      "key": "username",
+      "value": "testuser",
+      "description": "Username to look up or update."
+    },
+    {
+      "key": "test_email",
+      "value": "user@example.com",
+      "description": "Email used by Register/Login. Change if the address is already taken."
+    },
+    {
+      "key": "test_password",
+      "value": "password123",
+      "description": "Password used by Register/Login (min 8 characters)."
+    },
+    {
+      "key": "test_username",
+      "value": "username123",
+      "description": "Username used by Register User. Change if already taken (409)."
+    }
+  ]
+}
