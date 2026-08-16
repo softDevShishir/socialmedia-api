@@ -1,5 +1,7 @@
 # Postman Collection for Social Media API
 
+See [../TESTING.md](../TESTING.md) for how this fits alongside the other ways to test the API (curl, Swagger UI, `mvn test`), and [../DEPLOYMENT.md](../DEPLOYMENT.md) for how to bring up the local/Docker/Render environment you'd point this collection at.
+
 Covers all seven implemented features end-to-end: **Authentication**, **Users**, **Posts**, **Comments**, **Likes**, **Follow**, and **Feed & Timeline**, plus **Search** — 31 endpoints in 8 folders, matching the live `com.shishir.socialmedia` controllers and `SecurityConfig`.
 
 ## Files
@@ -8,7 +10,7 @@ Covers all seven implemented features end-to-end: **Authentication**, **Users**,
 |---|---|
 | `socialmedia-api.postman_collection.json` | The collection: all requests, folders, pre-request/test scripts, collection-level Bearer auth. |
 | `socialmedia-api-environment.json` | Local development environment (`http://localhost:8080`). |
-| `socialmedia-api-production.json` | Production environment template — `base_url` and secrets are `CHANGE_ME_*` / blank placeholders, not real values. |
+| `socialmedia-api-production.json` | Production environment — `base_url` is set to the live deployment, `https://socialmedia-api-gsvh.onrender.com`; secrets (`jwt_token`, `test_password`) are left blank, not real values. |
 
 ## Setup
 

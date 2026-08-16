@@ -4,7 +4,7 @@
   "values": [
     {
       "key": "base_url",
-      "value": "https://CHANGE_ME_your-deployed-app.onrender.com",
+      "value": "https://socialmedia-api-gsvh.onrender.com",
       "type": "default",
       "enabled": true
     },

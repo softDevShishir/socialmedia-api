@@ -38,7 +38,7 @@ public class SwaggerConfig {
                                 .url("http://localhost:8080")
                                 .description("Local Development"),
                         new Server()
-                                .url("https://socialmedia-api-render.onrender.com")
+                                .url("https://socialmedia-api-gsvh.onrender.com")
                                 .description("Production (Render)")))
                 .components(new Components()
                         .addSecuritySchemes("bearer-jwt", new SecurityScheme()
